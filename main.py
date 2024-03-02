@@ -1,6 +1,7 @@
 import pygame
 import random
 
+
 # Inicializar motor de pygame
 pygame.init()
 pygame.mixer.init()
@@ -29,6 +30,7 @@ background = pygame.transform.scale(background, (500, 500))
 obstaculo = pygame.transform.scale(obstaculo, (50, 50))
 
 # Matriz con los pixeles de la imagen background
+# Corregi matriz de coordenadas
 coordenadas = [[(0,0),(50,0),(100,0),(150,0),(200,0),(250,0),(300,0),(350,0),(400,0),(450,0)],
                [(0,50),(50,50),(100,50),(150,50),(200,50),(250,50),(300,50),(350,50),(400,50),(450,50)],
                [(0,100),(50,100),(100,100),(150,100),(200,100),(250,100),(300,100),(350,100),(400,100),(450,100)],
@@ -51,6 +53,8 @@ tablero = [['','','','','','','','','',''],
            ['','','','','','','','','',''],
            ['','','','','','','','','',''],
            ['','','','','','','','','',''],]
+
+
 
 # Solo apareceran aqui los zombies que ya hayan comido un cerebro
 # tablero_zombie_comido = [['','','','','','','','','',''],
