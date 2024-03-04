@@ -38,9 +38,9 @@ class Game():
             agent.updatePosition()
 
     #erase this method, it's only for debugging
-    # def printTable(self):
-    #     for row in self.__table:
-    #         print(row)
+    def printTable(self):
+        for row in self.__table:
+            print(row)
     
     # #erase this method, it's only for debugging
     # def printCoords(self):
@@ -58,7 +58,7 @@ class Game():
             
             self.__screen.blit(self.__background, (0, 0))
             self.moveAgents()
-            self.printTable()
+            # self.printTable()
 
             pg.display.update()
         
@@ -98,8 +98,10 @@ class Agent():
                 
 
     def updatePosition(self):
+        self.__table[self.__y][self.__x] = ''
         self.moveRandom()
         self.__screen.blit(self.__agentIcon, (self.__x * 50, self.__y * 50))
+        self.__table[self.__y][self.__x] = 'A'
 
 
         
