@@ -1,6 +1,7 @@
 import pygame
 import random
-
+import math
+#Practica 1 - Agentes Reactivos
 
 # Inicializar motor de pygame
 pygame.init()
@@ -9,8 +10,8 @@ screen = pygame.display.set_mode((500,500))
 pygame.display.set_caption("P.1 Agentes Reactivos")
 
 # Sonido de fondo
-sonido_fondo = pygame.mixer.Sound('static/sound.wav')
-pygame.mixer.Sound.play(sonido_fondo, -1) # Con -1 indicamos que queremos que se repita indefinidamente
+#sonido_fondo = pygame.mixer.Sound('static/sound.wav')
+#pygame.mixer.Sound.play(sonido_fondo, -1) # Con -1 indicamos que queremos que se repita indefinidamente
 
 
 # Cargar imagenes
@@ -25,10 +26,14 @@ obstaculo = pygame.image.load('static/obstaculo.png')
 botton_brain = pygame.image.load('static/button_brains1.png')
 botton_obstaculo = pygame.image.load('static/button_obstacle.png')
 button_trasher = pygame.image.load('static/button_trasher.png')
+button_zombie = pygame.image.load('static/button_zombie.png')
+button_tumba = pygame.image.load('static/button_tumba.png')
 # <--- Botones ON --->
 botton_brain_on = pygame.image.load('static/button_brains1_on.png')
 botton_obstaculo_on = pygame.image.load('static/button_obstacle_on.png')
 button_trasher_on = pygame.image.load('static/button_trasher_on.png')
+button_zombie_on = pygame.image.load('static/button_zombie_on.png')
+button_tumba_on = pygame.image.load('static/button_tumba_on.png')
 
 
 # Escalar imagenes
@@ -44,12 +49,15 @@ button_trasher = pygame.transform.scale(button_trasher, (50, 40))
 botton_brain_on = pygame.transform.scale(botton_brain_on, (100, 40))
 botton_obstaculo_on = pygame.transform.scale(botton_obstaculo_on, (100, 40))
 button_trasher_on = pygame.transform.scale(button_trasher_on, (50, 40))
+button_zombie = pygame.transform.scale(button_zombie, (50, 40))
+button_tumba = pygame.transform.scale(button_tumba, (50, 40))
+button_zombie_on = pygame.transform.scale(button_zombie_on, (50, 40))
+button_tumba_on = pygame.transform.scale(button_tumba_on, (50, 40))
 
 # Coordenadas para botones
 espacio_botones = 20
 
-coordenadas_botones = [[(0,0),(50,0),(100, 0 + espacio_botones),(150,0),(225,0 + espacio_botones),(250,0),(300,0 + espacio_botones),(350,0),(400,0),(450,0)],
-                       [(0,50),(50,50),(100,50),(150,50),(200,50),(250,50),(300,50),(350,50),(400,50),(450,50)],]
+coordenadas_botones = [[(0,0),(25,0 + espacio_botones),(100, 0 + espacio_botones),(150,0),(225,0 + espacio_botones),(250,0),(300,0 + espacio_botones),(350,0),(400,0 ),(425,0 + espacio_botones)],]
 
 # Brain -> 0,2
 # Obstaculo -> 0,6
@@ -68,7 +76,7 @@ coordenadas = [
 
 # Aqui apareceran los todos los elementos con zombies moviendose aleatoriamente
 tablero = [['','','','','','','','','',''],
-           ['','','','','','','','','',''],
+           ['','','','','','','','','',' '],
            ['','','','','','','','','',''],
            ['','','','','','','','','',''],
            ['','','','','','','','','',''],
@@ -77,44 +85,33 @@ tablero = [['','','','','','','','','',''],
            ['','','','','','','','','','']]
 
 
+# Tablero de coordenadas para zombies que ya comieron un cerebro
+# Aqui apareceran los todos los elementos con zombies moviendose aleatoriamente
+tablero_zc = [['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','',''],
+              ['','','','','','','','','','']]
+
+# Funcion mostrar matriz
+def mostrar_matriz(matriz):
+    for i in range(len(matriz)):
+        print(matriz[i])
+    print('--------------------------------')
+
+
 # Variable si ya termino el juego
 game_over = False
 
 # Fps
 clock = pygame.time.Clock()
 
-# funcion llenar tablero con zombies y tumbas
-def llenar_tablero_z(cantidad_z):
-    for i in range(cantidad_z):
-        num_aleatorio_x = random.randint(0, 7)
-        num_aleatorio_y = random.randint(0, 9)
+fil_tumba = 0
+col_tumba = 0
 
-        if tablero[num_aleatorio_x][num_aleatorio_y] == '':
-            tablero[num_aleatorio_x][num_aleatorio_y] = 'z'
-
-llenar_tablero_z(1)
-
-def llenar_tablero_t(cantidad_t):
-    for i in range(cantidad_t):
-        num_aleatorio_x = random.randint(0, 7)
-        num_aleatorio_y = random.randint(0, 9)
-
-        if tablero[num_aleatorio_x][num_aleatorio_y] == '':
-            tablero[num_aleatorio_x][num_aleatorio_y] = 't'
-        else:
-            llenar_tablero_t(cantidad_t - i)
-
-llenar_tablero_t(1)
-
-def llenar_tablero_o(cantidad_o):
-    for i in range(cantidad_o):
-        num_aleatorio_x = random.randint(0, 7)
-        num_aleatorio_y = random.randint(0, 9)
-
-        if tablero[num_aleatorio_x][num_aleatorio_y] == '':
-            tablero[num_aleatorio_x][num_aleatorio_y] = 'o'
-
-llenar_tablero_o(3)
 
 # Funcion para graficar objetos
 def graficar_objetos():
@@ -136,18 +133,34 @@ def graficar_objetos():
                 screen.blit(button_trasher_on, coordenadas_botones[0][4])
             else:
                 screen.blit(button_trasher, coordenadas_botones[0][4])
+            if poner_zombie:
+                screen.blit(button_zombie_on, coordenadas_botones[0][1])
+            else:
+                screen.blit(button_zombie, coordenadas_botones[0][1])
+            if poner_tumba:
+                screen.blit(button_tumba_on, coordenadas_botones[0][9])
+            else:
+                screen.blit(button_tumba, coordenadas_botones[0][9])
+            
             
             # Graficar objetos
-            if tablero[fil][col] == 'z':
-                screen.blit(zombien, coordenadas[fil][col])
-            elif tablero[fil][col] == 'zc':
+            if tablero_zc[fil][col] == 'zc':
                 screen.blit(zombie_comido,coordenadas[fil][col])
+            elif tablero[fil][col] == 'z':
+                screen.blit(zombien, coordenadas[fil][col])
             elif tablero[fil][col] == 't':
                 screen.blit(tumban, coordenadas[fil][col])
             elif tablero[fil][col] == 'c':
                 screen.blit(cerebro, coordenadas[fil][col])
             elif tablero[fil][col] == 'o':
                 screen.blit(obstaculo, coordenadas[fil][col])
+
+# Regresar los zm a z
+def regresar_zm_a_z():
+    for fil in range(8):
+        for col in range(10):
+            if tablero[fil][col] == 'zm':
+                tablero[fil][col] = 'z'
 
 # Movimiento aleatorio zombies
 def mover_zombies():
@@ -156,8 +169,7 @@ def mover_zombies():
             if tablero[fil][col] == 'z':
                 
                 num_aleatorio = random.randint(0, 3)
-
-                print('zombie en:', fil, col)
+                
                 if num_aleatorio == 0:
                     print('Movimiento: Arriba')
                 elif num_aleatorio == 1:
@@ -168,56 +180,156 @@ def mover_zombies():
                     print('Movimiento: Derecha')
 
                 if num_aleatorio == 0: #movimiento arriba
-                    if fil - 1 >= 0 and tablero[fil-1][col] != 'z' and tablero[fil-1][col] != 't' and tablero[fil-1][col] != 'o': 
-                        tablero[fil][col] = ''
-
+                    if fil - 1 >= 0 and tablero[fil-1][col] != 'z' and tablero[fil-1][col] != 't' and tablero[fil-1][col] != 'o' and tablero[fil-1][col] != 'zm':
+                        
                         if tablero[fil - 1][col] == 'c':
-                            tablero[fil-1][col] == 'zc'
+                            tablero[fil][col] = ''
+                            tablero[fil-1][col] = ''
+                            tablero_zc[fil-1][col] = 'zc'
                             print('Zombie ha comido un cerebro')
                         else:
-                            tablero[fil - 1][col] = 'z'
-                        
+                            tablero[fil][col] = ''
+                            tablero[fil - 1][col] = 'zm'
 
                 elif num_aleatorio == 1: #movimiento abajo
-                    if fil + 1 <= 7 and tablero[fil+1][col] != 'z' and tablero[fil+1][col] != 't' and tablero[fil+1][col] != 'o':
-                        tablero[fil][col] = ''
+                    if fil + 1 <= 7 and tablero[fil+1][col] != 'z' and tablero[fil+1][col] != 't' and tablero[fil+1][col] != 'o' and tablero[fil+1][col] != 'zm':
                         
                         if tablero[fil + 1][col] == 'c':
-                            tablero[fil + 1][col] == 'zc'
+                            tablero[fil][col] = ''
+                            tablero[fil+1][col] = ''
+                            tablero_zc[fil+1][col] = 'zc'
                             print('Zombie ha comido un cerebro')
                         else:
-                            tablero[fil + 1][col] = 'z'
+                            tablero[fil][col] = ''
+                            tablero[fil + 1][col] = 'zm'
 
                 elif num_aleatorio == 2: #movimiento izquierda
-                    if col - 1 >= 0 and tablero[fil][col-1] != 'z' and tablero[fil][col-1] != 't' and tablero[fil][col-1] != 'o':
-                        tablero[fil][col] = ''
+                    if col - 1 >= 0 and tablero[fil][col-1] != 'z' and tablero[fil][col-1] != 't' and tablero[fil][col-1] != 'o' and tablero[fil][col-1] != 'zm':
+                        
 
                         if tablero[fil][col-1] == 'c':
-                            tablero == 'zc'
+                            tablero[fil][col] = ''
+                            tablero[fil][col-1] = ''
+                            tablero_zc[fil][col-1] = 'zc'
                             print('Zombie ha comido un cerebro')
                         else:
-                            tablero[fil][col - 1] = 'z'
+                            tablero[fil][col] = ''
+                            tablero[fil][col - 1] = 'zm'
+
+
                 elif num_aleatorio == 3: #movimiento derecha
-                    if col + 1 <= 9 and tablero[fil][col+1] != 'z' and tablero[fil][col+1] != 't' and tablero[fil][col+1] != 'o':
-                        tablero[fil][col] = ''
+                    if col + 1 <= 9 and tablero[fil][col+1] != 'z' and tablero[fil][col+1] != 't' and tablero[fil][col+1] != 'o' and tablero[fil][col+1] != 'zm':
+                        
                         
                         if tablero [fil][col+1] == 'c':
-                            tablero[fil][col+1] == 'zc'
+                            tablero[fil][col+1] = ''
+                            tablero[fil][col] = ''
+                            tablero_zc[fil][col+1] = 'zc'
                             print('Zombie ha comido un cerebro')
                         else:
-                            tablero[fil][col + 1] = 'z'
+                            tablero[fil][col] = ''
+                            tablero[fil][col + 1] = 'zm'
 
-# def moviemiento_zombie_comido ():
-                            
+    for fil in range(8):
+        for col in range(10):
+            if tablero[fil][col] == 'zm':
+                tablero[fil][col] = 'z'
+
+
+
+def moviemiento_zombie_comido ():
+    for fil in range(8):
+        for col in range(10):
+            
+            if tablero_zc[fil][col] == 'zc':
+
+                # existe arriba?
+                if fil != 0 and tablero[fil-1][col] != 'o':
+                    # distancia euclidiana a la tumba
+                    arriba_a_tuba = math.sqrt((fil_tumba - (fil-1))**2 + (col_tumba - col)**2)
+                else:
+                    arriba_a_tuba = 1000000;
+
+                # existe abajo?
+                if fil != 7 and tablero[fil+1][col] != 'o':
+                    # distancia euclidiana a la tumba
+                    abajo_a_tuba = math.sqrt((fil_tumba - (fil+1))**2 + (col_tumba - col)**2)
+                else:
+                    abajo_a_tuba = 1000000;
+
+                # existe izquierda?
+                if col != 0 and tablero[fil][col-1] != 'o':
+                    # distancia euclidiana a la tumba
+                    izquierda_a_tuba = math.sqrt((fil_tumba - fil)**2 + (col_tumba - (col-1))**2)
+                else:
+                    izquierda_a_tuba = 1000000;
+
+                # existe derecha?
+                if col != 9 and tablero[fil][col+1] != 'o':
+                    # distancia euclidiana a la tumba
+                    derecha_a_tuba = math.sqrt((fil_tumba - fil)**2 + (col_tumba - (col+1))**2)
+                else:
+                    derecha_a_tuba = 1000000;
+                
+                # Nos quedamos con la distancia mas corta
+                minimo = min(arriba_a_tuba, abajo_a_tuba, izquierda_a_tuba, derecha_a_tuba)
+
+                if minimo == arriba_a_tuba:
+                    if tablero[fil-1][col] == 't':
+                        tablero_zc[fil][col] = ''
+                        tablero[fil][col] = 'z'
+                        print('Zombie ha llegado a la tumba y se convierte en zombie normal')
+                    else:
+                        tablero_zc[fil][col] = ''
+                        tablero_zc[fil-1][col] = 'zcm'
+                        print('Zombie comido se mueve arriba')
+
+                elif minimo == abajo_a_tuba:
+                    if tablero[fil+1][col] == 't':
+                        tablero_zc[fil][col] = ''
+                        tablero[fil][col] = 'z'
+                        print('Zombie ha llegado a la tumba y se convierte en zombie normal')
+                    else:
+                        tablero_zc[fil][col] = ''
+                        tablero_zc[fil+1][col] = 'zcm'
+                        print('Zombie comido se mueve abajo')
+
+                elif minimo == izquierda_a_tuba:
+                    if tablero[fil][col-1] == 't':
+                        tablero_zc[fil][col] = ''
+                        tablero[fil][col] = 'z'
+                        print('Zombie ha llegado a la tumba y se convierte en zombie normal')
+                    else:
+                        tablero_zc[fil][col] = ''
+                        tablero_zc[fil][col-1] = 'zcm'
+                        print('Zombie comido se mueve izquierda')
+
+                elif minimo == derecha_a_tuba:
+                    if tablero[fil][col+1] == 't':
+                        tablero_zc[fil][col] = ''
+                        tablero[fil][col] = 'z'
+                        print('Zombie ha llegado a la tumba y se convierte en zombie normal')
+                    else:
+                        tablero_zc[fil][col] = ''
+                        tablero_zc[fil][col+1] = 'zcm'
+                        print('Zombie comido se mueve derecha')
+
+    for fil in range(8):
+        for col in range(10):
+            if tablero_zc[fil][col] == 'zcm':
+                tablero_zc[fil][col] = 'zc'
+
 poner_cerebro = False
 poner_obstaculo = False
+poner_zombie = False
+poner_tumba = False
 borrar_objeto = False
 
+
 # Agregar cerebro
-def agregar_cerebro_obstaculos(x, y, tipo):
+def agregar(x, y, tipo):
     if tablero[x][y] == '':
         tablero[x][y] = tipo
-    
                 
 # Loop de juego
 while not game_over:
@@ -241,6 +353,8 @@ while not game_over:
                     poner_cerebro = True
                     poner_obstaculo = False
                     borrar_objeto = False
+                    poner_zombie = False
+                    poner_tumba = False
 
             elif x >= 300 and x <= 400 and y >= (0 + espacio_botones) and y <= (40 + espacio_botones):
                 print('[Obstaculo]')
@@ -251,6 +365,8 @@ while not game_over:
                     poner_obstaculo = True
                     poner_cerebro = False
                     borrar_objeto = False
+                    poner_zombie = False
+                    poner_tumba = False
 
             elif x >= 225 and x <= 275 and y >= (0 + espacio_botones) and y <= (40 + espacio_botones):
                 print('[Trash]')
@@ -258,40 +374,73 @@ while not game_over:
                 if borrar_objeto:
                     borrar_objeto = False
                 else:
+                    borrar_objeto = True
                     poner_cerebro = False
                     poner_obstaculo = False
-                    borrar_objeto = True
+                    poner_tumba = False
+                    poner_zombie = False
+                    
+            
+            elif x >= 25 and x <= 75 and y >= (0 + espacio_botones) and y <= (40 + espacio_botones):
+                print('[Zombie]')
+
+                if poner_zombie:
+                    poner_zombie = False
+                else:
+                    poner_zombie = True
+                    poner_tumba = False
+                    poner_obstaculo = False
+                    poner_cerebro = False
+                    borrar_objeto = False
+            
+            elif x >= 425 and x <= 475 and y >= (0 + espacio_botones) and y <= (40 + espacio_botones):
+                print('[Tumba]')
+
+                if poner_tumba:
+                    poner_tumba = False
+                else:
+                    poner_tumba = True
+                    poner_zombie = False
+                    poner_obstaculo = False
+                    poner_cerebro = False
+                    borrar_objeto = False
 
             elif poner_cerebro and y >= 100:
                 x = (x) // 50
                 y = (y - 100) // 50 
-                agregar_cerebro_obstaculos(y, x, 'c')
+                print('Coordenadas: ', x, y)
+                agregar(y, x, 'c')
             elif poner_obstaculo and y >= 100:
                 x = (x) // 50
                 y = (y - 100) // 50 
-                agregar_cerebro_obstaculos(y, x, 'o')
+                agregar(y, x, 'o')
 
             elif borrar_objeto and y >= 100:
                 x = (x) // 50
                 y = (y - 100) // 50 
                 tablero[y][x] = ''
-            
+
+            elif poner_zombie and y >= 100:
+                x = (x) // 50
+                y = (y - 100) // 50 
+                agregar(y, x, 'z')
+            elif poner_tumba and y >= 100:
+                x = (x) // 50
+                y = (y - 100) // 50 
+                fil_tumba, col_tumba = y, x
+                agregar(y, x, 't')
 
             # Se le resta 100 por que no contamos el rango de los botones
             # Se mandan las coordenadas en orden inverso ya que el eje x y y estan al reves
             # en la matriz de coordenadas y en la matriz del tablero, por como se ven los pixeles 
             # y las matrices
 
+
     mover_zombies()
 
-    graficar_objetos()
-    
+    moviemiento_zombie_comido()
 
-    # Graficar nuevos objetos (prueba)
-    # screen.blit(background, (0, 0))
-    # screen.blit(zombien, (0, 0))
-    # screen.blit(tumban, (50, 50))
-    # screen.blit(cerebro, (100, 100))
+    graficar_objetos()
 
     # Actualizar pantalla
     pygame.display.update()
